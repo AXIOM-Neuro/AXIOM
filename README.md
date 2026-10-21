@@ -2,7 +2,7 @@
 
 ### Readable scientific programming for computational neuroscience.
 
-AXIOM is an experimental, Python-powered programming language designed to make computational neuroscience and scientific computing easier to express, understand, and validate.
+AXIOM is a Python-powered programming language designed specifically for computational neuroscience, making neural modeling, brain-signal analysis, and scientific simulations more readable, intuitive, and accessible.
 
 Our goal is simple: **scientific code should be readable by humans, precise enough for computers, and transparent about its assumptions.**
 
