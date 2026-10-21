@@ -1,0 +1,8 @@
+# A first AXIOM program
+let membrane_voltage = 1.25
+let spike_threshold = 1.0
+
+show membrane_voltage
+show membrane_voltage + spike_threshold
+show (membrane_voltage - spike_threshold) * 2
+
