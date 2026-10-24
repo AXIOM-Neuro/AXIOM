@@ -2,125 +2,189 @@
 
 ### Readable scientific programming for computational neuroscience.
 
-AXIOM is a Python-powered programming language designed specifically for computational neuroscience, making neural modeling, brain-signal analysis, and scientific simulations more readable, intuitive, and accessible.
+AXIOM is a Python-powered programming language designed specifically for computational neuroscience, making neural modeling, brain-signal analysis, and scientific simulations readable, intuitive, and accessible.
 
 Our goal is simple: **scientific code should be readable by humans, precise enough for computers, and transparent about its assumptions.**
 
-> **Development status:** Early development. The language specification and initial interpreter are being developed. Features will be documented as they are implemented and tested.
+> **Development status:** Release v0.1.0. AXIOM features a readable domain-specific language (DSL) interpreter, unit-aware quantities, Leaky Integrate-and-Fire (LIF) and Adaptive Exponential Integrate-and-Fire (AdEx) neuron models, ODE solvers (Euler, RK2, RK4), stimulus abstractions, simulation recording, CSV export, CLI tools, and scientific validation documentation.
 
-## Why AXIOM?
+---
 
-Scientific programming often requires researchers to combine mathematical models, numerical methods, data analysis, and experimental workflows. AXIOM aims to bring these elements together in a language designed around the way scientists think and work.
+## Quick Start & Installation
 
-- **Readable by design** — express scientific procedures using clear, descriptive syntax.
-- **Neuroscience-focused** — build toward neuron models, neural networks, and brain-signal analysis.
-- **Reproducible experiments** — make parameters, simulation settings, and outputs explicit.
-- **Scientific transparency** — document assumptions, numerical methods, limitations, and validation results.
-- **Python-powered** — build on the Python ecosystem for numerical computing and scientific data analysis.
+Install AXIOM in editable mode from the repository root:
 
-## Design philosophy
-
-AXIOM is being developed around five principles:
-
-1. **Clarity over cleverness.** Code should communicate its purpose without unnecessary syntactic complexity.
-2. **Explicit assumptions.** Models and experiments should make important choices visible.
-3. **Validation over assertion.** Numerical results should be checked against appropriate references and tests.
-4. **Reproducibility by design.** Experiments should record the settings needed to understand and reproduce their results.
-5. **Honest scientific claims.** A successful program execution is not, by itself, evidence that a scientific model accurately describes reality.
-
-## A glimpse of the intended syntax
-
-The following example illustrates the readability we want AXIOM to achieve. It is a design sketch, not yet executable AXIOM code.
-
+```bash
+pip install -e .
 ```
-experiment "My First Neuron"
 
+Run tests to verify installation:
+
+```bash
+pytest
+```
+
+---
+
+## Executing AXIOM Programs
+
+AXIOM programs use the `.ax` file extension.
+
+### Command Line Interface (CLI)
+
+- Run an `.ax` program:
+  ```bash
+  axiom run examples/first_neuron.ax
+  ```
+
+- Run an AdEx model script:
+  ```bash
+  axiom run examples/adex_neuron.ax
+  ```
+
+- Check syntax and validate a script without running:
+  ```bash
+  axiom check examples/first_neuron.ax
+  ```
+
+- Inspect model declarations and simulation summary:
+  ```bash
+  axiom inspect examples/adex_neuron.ax
+  ```
+
+- Print version:
+  ```bash
+  axiom --version
+  ```
+
+---
+
+## Example AXIOM Scripts
+
+### 1. Leaky Integrate-and-Fire (LIF) Neuron (`examples/first_neuron.ax`)
+
+```axiom
+# My first AXIOM neuron experiment
 neuron "Example Neuron":
     membrane_time = 20 ms
-    spike_threshold = 1 mV
-    reset_voltage = 0 mV
+    resting_voltage = -65 mV
+    spike_threshold = -50 mV
+    reset_voltage = -65 mV
+    input_resistance = 10 MOhm
+    initial_voltage = -65 mV
 
-simulate for 1 second
-    using time_step 1 ms
+inject current 2 nA
 
-show membrane_voltage
+simulate for 100 ms using time_step 0.1 ms
+
+show spike_count
 show spike_times
 
 save results to "neuron_results.csv"
 ```
 
-The intended experience is straightforward: define a model, specify an experiment, observe its behavior, and save the results.
+### 2. Adaptive Exponential (AdEx) Neuron (`examples/adex_neuron.ax`)
 
-## Initial development goals
+```axiom
+# AdEx Neuron Adaptation Experiment
+adex_neuron "Adapting Cortical Cell":
+    capacitance = 200 pF
+    leak_conductance = 10 nS
+    resting_voltage = -70 mV
+    slope_factor = 2 mV
+    threshold_voltage = -50 mV
+    peak_voltage = 0 mV
+    reset_voltage = -58 mV
+    adaptation_coupling = 2 nS
+    spike_triggered_adaptation = 0.01 nA
+    adaptation_time_constant = 30 ms
 
-The first development milestones are:
+inject step current 0.5 nA from 10 ms for 80 ms
 
-- [ ] Define the language grammar and syntax.
-- [ ] Implement a tokenizer, parser, and interpreter in Python.
-- [ ] Support basic expressions, parameters, and useful error messages.
-- [ ] Implement a minimal leaky integrate-and-fire neuron model.
-- [ ] Record membrane voltage and spike events.
-- [ ] Export simulation results to CSV.
-- [ ] Add automated tests and independent numerical reference checks.
-- [ ] Document installation, usage, limitations, and validation results.
+simulate for 100 ms using time_step 0.1 ms using solver rk4
 
-These are development goals, not claims that the features are already implemented.
+show spike_count
+show spike_times
 
-## Technology
-
-AXIOM is being developed using Python. As the project evolves, it may integrate established scientific libraries for numerical computation, data processing, and visualization.
-
-The language itself will have its own syntax and execution rules rather than simply renaming ordinary Python code.
-
-## Intended applications
-
-AXIOM is being designed to support future work in:
-
-- Computational neuroscience and neuron modeling
-- Neural network simulations
-- EEG and brain–computer interface data analysis
-- Scientific experiments and parameter sweeps
-- Numerical analysis and reproducible computational research
-
-These are intended application areas; their inclusion here does not imply that each is currently supported.
-
-## Project structure
-
-The repository is expected to grow toward a structure like this:
-
-```text
-axiom-language/
-├── README.md
-├── axiom.py
-├── examples/
-│   └── first_neuron.ax
-├── tests/
-│   └── test_axiom.py
-└── docs/
-    └── LANGUAGE_SPEC.md
+save results to "adex_neuron_results.csv"
 ```
 
-Files will be added as their implementations become available.
+---
 
-## Contributing
+## Python API Usage
 
-AXIOM is in its early stages, and its language design is still evolving. Contributions and constructive feedback on readability, scientific correctness, numerical methods, and software architecture will be valuable as the project develops.
+```python
+from axiom.neuroscience import AdExParameters, simulate_adex
+from axiom.stimuli import StepCurrent
+from axiom.units import MS, MV, NA, NS, PF, Quantity
 
-Before proposing a feature, consider:
+params = AdExParameters(
+    capacitance=Quantity(200, PF),
+    leak_conductance=Quantity(10, NS),
+    resting_voltage=Quantity(-70, MV),
+    slope_factor=Quantity(2, MV),
+    threshold_voltage=Quantity(-50, MV),
+    peak_voltage=Quantity(0, MV),
+    reset_voltage=Quantity(-58, MV),
+    adaptation_coupling=Quantity(2, NS),
+    spike_triggered_adaptation=Quantity(0.01, NA),
+    adaptation_time_constant=Quantity(30, MS),
+)
 
-- Does it make scientific code easier to understand?
-- Can its behavior be specified unambiguously?
-- Can its implementation be tested?
-- Are its scientific assumptions and limitations documented?
+stimulus = StepCurrent(
+    amplitude=Quantity(0.5, NA),
+    start_time=Quantity(10, MS),
+    duration=Quantity(80, MS),
+)
 
-## Scientific responsibility
+result = simulate_adex(
+    parameters=params,
+    injected_current=stimulus,
+    duration=Quantity(100, MS),
+    time_step=Quantity(0.1, MS),
+    solver="rk4",
+)
 
-AXIOM is a research and software-development project. Its outputs must be interpreted according to the underlying model, numerical method, data quality, and validation evidence. Simulations are not automatically biological evidence, and numerical agreement with a reference does not establish that a model is biologically accurate.
+print(f"Recorded AdEx samples: {len(result.times_ms)}")
+print(f"Spike count: {len(result.spike_times_ms)}")
+result.save_csv("adex_output.csv")
+```
+
+---
+
+## Features & Scientific Foundation
+
+- **Physical Units**: Time (`ms`, `s`, `us`), voltage (`mV`, `V`), current (`nA`, `pA`), resistance (`MOhm`), capacitance (`nF`, `pF`, `uF`), conductance (`uS`, `nS`, `pS`), and frequency (`Hz`).
+- **Explicit Numerical Integration**: Choice of Forward Euler, Midpoint (RK2), or classical RK4 solvers with order-of-accuracy convergence verification.
+- **Supported Models**: Single-variable LIF and two-variable Adaptive Exponential Integrate-and-Fire (AdEx).
+- **Scientific Documentation**: Architecture audits (`docs/ARCHITECTURE_AUDIT.md`), validation plans (`docs/SCIENTIFIC_VALIDATION_PLAN.md`), and annotated bibliography (`docs/RESEARCH_BIBLIOGRAPHY.md`).
+
+---
+
+## Project Structure
+
+```text
+.
+├── src/
+│   └── axiom/
+│       ├── __init__.py
+│       ├── __main__.py          # CLI entry points
+│       ├── interpreter.py       # DSL lexer/parser/interpreter
+│       ├── neuroscience.py      # LIF and AdEx model implementations
+│       ├── recording.py         # LIF and AdEx results & CSV exports
+│       ├── solvers.py           # Euler, RK2, RK4 integration routines
+│       ├── stimuli.py           # Input current abstractions
+│       └── units.py             # Physical unit system
+├── tests/                       # Unit, integration, CLI, and convergence tests
+├── examples/                    # Runnable .ax and .py examples
+├── docs/                        # Language specification, audit, validation plan & bibliography
+├── pyproject.toml
+├── README.md
+└── LICENSE
+```
+
+---
 
 ## License
 
 MIT License
-
----
-
-**AXIOM — Make scientific computation clearer.**

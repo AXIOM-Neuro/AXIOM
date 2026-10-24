@@ -1,0 +1,21 @@
+# AdEx Neuron Adaptation Experiment
+adex_neuron "Adapting Cortical Cell":
+    capacitance = 200 pF
+    leak_conductance = 10 nS
+    resting_voltage = -70 mV
+    slope_factor = 2 mV
+    threshold_voltage = -50 mV
+    peak_voltage = 0 mV
+    reset_voltage = -58 mV
+    adaptation_coupling = 2 nS
+    spike_triggered_adaptation = 0.01 nA
+    adaptation_time_constant = 30 ms
+
+inject step current 0.5 nA from 10 ms for 80 ms
+
+simulate for 100 ms using time_step 0.1 ms using solver rk4
+
+show spike_count
+show spike_times
+
+save results to "adex_neuron_results.csv"
