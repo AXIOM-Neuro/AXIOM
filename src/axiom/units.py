@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
+import re
 
 # Dimension exponents are ordered as (time, voltage, current).
 Dimension = tuple[int, int, int]
@@ -53,6 +54,35 @@ NA = Unit("nA", 1.0, (0, 0, 1))
 PA = Unit("pA", 0.001, (0, 0, 1))
 NF = Unit("nF", 1.0, (1, -1, 1))
 MOHM = Unit("MOhm", 1.0, (0, 1, -1))
+HZ = Unit("Hz", 0.001, (-1, 0, 0))
+
+UNITS: dict[str, Unit] = {
+    "1": DIMENSIONLESS,
+    "ms": MS,
+    "s": SECOND,
+    "sec": SECOND,
+    "second": SECOND,
+    "seconds": SECOND,
+    "us": US,
+    "microsecond": US,
+    "microseconds": US,
+    "mv": MV,
+    "v": VOLT,
+    "volt": VOLT,
+    "volts": VOLT,
+    "na": NA,
+    "pa": PA,
+    "picoampere": PA,
+    "picoamperes": PA,
+    "nanoampere": NA,
+    "nanoamperes": NA,
+    "nf": NF,
+    "mohm": MOHM,
+    "megaohm": MOHM,
+    "megaohms": MOHM,
+    "hz": HZ,
+    "hertz": HZ,
+}
 
 
 @dataclass(frozen=True)
@@ -137,6 +167,21 @@ class Quantity:
         self._same_dimension(other)
         return self.base_value <= other.base_value
 
+    def __gt__(self, other: Quantity) -> bool:
+        self._same_dimension(other)
+        return self.base_value > other.base_value
+
+    def __ge__(self, other: Quantity) -> bool:
+        self._same_dimension(other)
+        return self.base_value >= other.base_value
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Quantity):
+            return False
+        if self.unit.dimension != other.unit.dimension:
+            return False
+        return math.isclose(self.base_value, other.base_value, rel_tol=1e-12, abs_tol=1e-12)
+
     def __repr__(self) -> str:
         return f"Quantity({self.value!r}, {self.unit.symbol!r})"
 
@@ -149,3 +194,32 @@ def require_unit(quantity: Quantity, unit: Unit, name: str) -> Quantity:
         return quantity.to(unit)
     except ValueError as error:
         raise ValueError(f"{name} must have units compatible with {unit.symbol}.") from error
+
+
+_QUANTITY_RE = re.compile(
+    r"^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*([A-Za-z1\*\/_]+)?\s*$"
+)
+
+
+def parse_quantity(text: str) -> Quantity:
+    """Parse a string representation of a numeric value with optional unit into a Quantity."""
+    match = _QUANTITY_RE.match(text.strip())
+    if not match:
+        raise ValueError(f"Invalid quantity expression: {text!r}")
+
+    num_str, unit_str = match.groups()
+    val = float(num_str)
+
+    if not unit_str or unit_str.strip() == "1":
+        return Quantity(val, DIMENSIONLESS)
+
+    key = unit_str.strip().lower()
+    if key in UNITS:
+        return Quantity(val, UNITS[key])
+
+    # Direct match in case of case-sensitive symbol (e.g. MOhm)
+    for u in UNITS.values():
+        if u.symbol == unit_str.strip():
+            return Quantity(val, u)
+
+    raise ValueError(f"Unknown physical unit: {unit_str!r}")

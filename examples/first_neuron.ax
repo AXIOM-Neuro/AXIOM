@@ -1,0 +1,17 @@
+# My first AXIOM neuron experiment
+neuron "Example Neuron":
+    membrane_time = 20 ms
+    resting_voltage = -65 mV
+    spike_threshold = -50 mV
+    reset_voltage = -65 mV
+    input_resistance = 10 MOhm
+    initial_voltage = -65 mV
+
+inject current 2 nA
+
+simulate for 100 ms using time_step 0.1 ms
+
+show spike_count
+show spike_times
+
+save results to "neuron_results.csv"
