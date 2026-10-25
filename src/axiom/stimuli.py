@@ -80,12 +80,22 @@ class PulseTrainCurrent(Stimulus):
         p_dur = require_unit(self.pulse_duration, MS, "pulse_duration")
         require_unit(self.frequency, HZ, "frequency")
 
+        freq = require_unit(self.frequency, HZ, "frequency")
+
         if t_start.value < 0:
             raise ValueError("start_time cannot be negative.")
         if p_dur.value <= 0:
             raise ValueError("pulse_duration must be positive.")
+        if freq.value <= 0:
+            raise ValueError("frequency must be positive.")
         if self.num_pulses <= 0:
             raise ValueError("num_pulses must be a positive integer.")
+
+        period_ms = 1000.0 / freq.to(HZ).value
+        if p_dur.to(MS).value > period_ms + 1e-9:
+            raise ValueError(
+                f"pulse_duration ({p_dur.to(MS).value} ms) cannot exceed pulse period ({period_ms} ms)."
+            )
 
     def current_at(self, time: Quantity) -> Quantity:
         t = require_unit(time, MS, "time").value
@@ -102,11 +112,13 @@ class PulseTrainCurrent(Stimulus):
             return Quantity(0.0, NA)
 
         time_since_start = t - t_start
-        pulse_index = int(math.floor(time_since_start / period_ms))
+        # Use small rounding epsilon to avoid floating-point floor errors at exact pulse period multiples
+        pulse_index = int(math.floor(round(time_since_start / period_ms, 9)))
 
         if 0 <= pulse_index < self.num_pulses:
             time_in_pulse = time_since_start - pulse_index * period_ms
-            if 0 <= time_in_pulse < p_dur:
+            # Boundary convention: [t_k, t_k + pulse_duration)
+            if 0 <= time_in_pulse < p_dur - 1e-12:
                 return self.amplitude
 
         return Quantity(0.0, NA)

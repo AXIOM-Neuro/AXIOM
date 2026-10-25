@@ -69,6 +69,7 @@ neuron "MyNeuron":
 Specifies stimulation pattern:
 - **Constant current:** `inject current 2 nA`
 - **Step current:** `inject step current 2 nA from 10 ms for 50 ms`
+- **Pulse train current:** `inject pulse train current 2 nA starting at 0 ms pulse_duration 1 ms frequency 10 Hz pulses 5`
 
 ### `simulate`
 Executes simulation for specified duration and parameters:
