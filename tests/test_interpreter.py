@@ -83,6 +83,22 @@ class TestAxiomInterpreter(unittest.TestCase):
         result = run_source("show -5\n")
         self.assertEqual(result, [-5])
 
+    def test_pulse_train_injection(self):
+        source = (
+            'neuron "PulseNeuron":\n'
+            '    membrane_time = 20 ms\n'
+            '    resting_voltage = -65 mV\n'
+            '    spike_threshold = -50 mV\n'
+            '    reset_voltage = -65 mV\n'
+            '    input_resistance = 10 MOhm\n'
+            '\n'
+            'inject pulse train current 2 nA starting at 0 ms pulse_duration 1 ms frequency 10 Hz pulses 5\n'
+            'simulate for 500 ms using time_step 0.1 ms using solver rk4\n'
+            'show spike_count\n'
+        )
+        result = run_source(source)
+        self.assertIsInstance(result[0], int)
+
 
 if __name__ == "__main__":
     unittest.main()

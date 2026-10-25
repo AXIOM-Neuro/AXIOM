@@ -1,0 +1,16 @@
+# Example pulse train current stimulation experiment
+neuron "PulseTrainNeuron":
+    membrane_time = 20 ms
+    resting_voltage = -65 mV
+    spike_threshold = -50 mV
+    reset_voltage = -65 mV
+    input_resistance = 10 MOhm
+    initial_voltage = -65 mV
+
+inject pulse train current 2 nA starting at 0 ms pulse_duration 1 ms frequency 10 Hz pulses 5
+
+simulate for 500 ms using time_step 0.1 ms using solver rk4
+
+show spike_count
+show spike_times
+save results to "pulse_train_results.csv"

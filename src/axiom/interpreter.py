@@ -300,7 +300,35 @@ class InterpreterRuntime:
         return next_idx
 
     def _handle_inject(self, stmt: str) -> None:
-        if stmt.startswith("step current "):
+        if stmt.startswith("pulse train current ") or stmt.startswith("pulse_train current "):
+            pattern = r"^pulse[_\s]+train\s+current\s+(.+?)\s+starting\s+at\s+(.+?)\s+pulse_duration\s+(.+?)\s+frequency\s+(.+?)\s+pulses\s+(.+)$"
+            match = re.match(pattern, stmt)
+            if not match:
+                raise AxiomError(
+                    "Invalid pulse train current syntax. Expected: inject pulse train current <amplitude> starting at <start_time> pulse_duration <duration> frequency <freq> pulses <count>"
+                )
+            amp_expr, start_expr, pdur_expr, freq_expr, pulses_expr = match.groups()
+
+            amp = evaluate_expression(amp_expr, self.variables)
+            start = evaluate_expression(start_expr, self.variables)
+            p_dur = evaluate_expression(pdur_expr, self.variables)
+            freq = evaluate_expression(freq_expr, self.variables)
+            num_pulses_val = evaluate_expression(pulses_expr, self.variables)
+
+            amp_qty = amp if isinstance(amp, Quantity) else Quantity(float(amp), NA)
+            start_qty = start if isinstance(start, Quantity) else Quantity(float(start), MS)
+            pdur_qty = p_dur if isinstance(p_dur, Quantity) else Quantity(float(p_dur), MS)
+            freq_qty = freq if isinstance(freq, Quantity) else Quantity(float(freq), HZ)
+            num_pulses = int(num_pulses_val.value if isinstance(num_pulses_val, Quantity) else num_pulses_val)
+
+            self.active_stimulus = PulseTrainCurrent(
+                amplitude=amp_qty,
+                start_time=start_qty,
+                pulse_duration=pdur_qty,
+                frequency=freq_qty,
+                num_pulses=num_pulses,
+            )
+        elif stmt.startswith("step current "):
             parts = stmt[13:].split(" from ")
             amp_expr = parts[0].strip()
             rest = parts[1] if len(parts) > 1 else ""

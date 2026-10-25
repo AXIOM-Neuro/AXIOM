@@ -117,6 +117,16 @@ stimulus = StepCurrent(
     duration=Quantity(80, MS),
 )
 
+# Or pulse train stimulus:
+# from axiom.stimuli import PulseTrainCurrent
+# stimulus = PulseTrainCurrent(
+#     amplitude=Quantity(2, NA),
+#     start_time=Quantity(0, MS),
+#     pulse_duration=Quantity(1, MS),
+#     frequency=Quantity(10, HZ),
+#     num_pulses=5,
+# )
+
 # Run simulation with RK4 numerical integration
 result = simulate_lif(
     parameters=params,
