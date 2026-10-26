@@ -173,6 +173,8 @@ result.save_csv("python_lif_output.csv")
 ├── docs/                        # Language specification & docs
 ├── pyproject.toml
 ├── README.md
+├── paper.md
+├── references.bib
 └── LICENSE
 ```
 
