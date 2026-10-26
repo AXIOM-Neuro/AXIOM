@@ -14,13 +14,13 @@ Our goal is simple: **scientific code should be readable by humans, precise enou
 
 Install AXIOM in editable mode from the repository root:
 
-```bash
+```
 pip install -e .
 ```
 
 Run tests to verify installation:
 
-```bash
+```
 pytest
 ```
 
@@ -33,23 +33,23 @@ AXIOM programs use the `.ax` file extension.
 ### Command Line Interface (CLI)
 
 - Run an `.ax` program:
-  ```bash
+  ```
   axiom run examples/first_neuron.ax
   ```
   *(or simply `axiom examples/first_neuron.ax`)*
 
 - Check syntax and validate a script without running:
-  ```bash
+  ```
   axiom check examples/first_neuron.ax
   ```
 
 - Inspect declarations and simulation results:
-  ```bash
+  ```
   axiom inspect examples/first_neuron.ax
   ```
 
 - Print version:
-  ```bash
+  ```
   axiom --version
   ```
 
@@ -59,7 +59,7 @@ AXIOM programs use the `.ax` file extension.
 
 Here is a complete, executable AXIOM program (`examples/first_neuron.ax`):
 
-```axiom
+```
 # My first AXIOM neuron experiment
 neuron "Example Neuron":
     membrane_time = 20 ms
@@ -81,7 +81,7 @@ save results to "neuron_results.csv"
 
 Running `axiom run examples/first_neuron.ax` outputs:
 
-```text
+```
 3
 (27.7, 55.4, 83.1)
 ```
@@ -94,7 +94,7 @@ and generates `neuron_results.csv` containing recorded time samples, membrane vo
 
 You can also use AXIOM directly from Python:
 
-```python
+```
 from axiom.neuroscience import LIFParameters, simulate_lif
 from axiom.stimuli import StepCurrent
 from axiom.units import MS, MV, NA, MOHM, Quantity
@@ -156,7 +156,7 @@ result.save_csv("python_lif_output.csv")
 
 ## Project Structure
 
-```text
+```
 .
 ├── src/
 │   └── axiom/
@@ -178,6 +178,24 @@ result.save_csv("python_lif_output.csv")
 
 ---
 
+## Contributing & Community Guidelines
+
+We welcome contributions from the computational neuroscience and open-science communities! Whether you want to fix a bug, add a new numerical solver, or suggest syntax improvements for the DSL, please follow these steps:
+
+### Contributing Code
+1. Fork the repository on GitHub.
+2. Create a feature branch (`git checkout -b feature/amazing-feature`).
+3. Ensure your changes are fully covered by unit tests in the `tests/` directory.
+4. Run `pytest` to verify all test suites pass.
+5. Commit your changes using descriptive commit messages and open a Pull Request.
+
+### Reporting Issues & Getting Support
+- **Bug Reports & Feature Requests:** Please open a detailed issue on the [GitHub Issues](https://github.com/AXIOM-Neuro/AXIOM/issues) page. Include your `.ax` script setup, your operating system, and the exact error trace.
+- **General Support:** If you have questions about implementing a specific biophysical equation or configuring custom current stimuli, please start a discussion thread in our repository's discussion tab or contact the maintainer at `folarera.kassim@gmail.com`.
+
+---
+
+
 ## License
 
-MIT License
+AXIOM is free, open-source, and licensed under the MIT License
