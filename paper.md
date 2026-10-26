@@ -284,15 +284,11 @@ The author contributed to the AXIOM software and manuscript. This statement shou
 
 # Funding
 
-No funding information is asserted in this manuscript. Add an appropriate statement if funding supported the work.
+No funding has been given to this research.
 
 # Competing Interests
 
-The author should declare any relevant competing interests or state that none exist, as appropriate.
-
-# Acknowledgements
-
-Acknowledgements may be added for individuals or organizations that provided substantive assistance.
+The author has no competing interests. 
 
 ## References
 
