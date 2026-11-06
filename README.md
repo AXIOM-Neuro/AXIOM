@@ -201,3 +201,15 @@ We welcome contributions from the computational neuroscience and open-science co
 ## License
 
 AXIOM is free, open-source, and licensed under the MIT License
+
+
+## Optional C++ Numerical Backend
+
+AXIOM also includes an optional C++17 numerical kernel for single-step LIF
+integration (Euler, RK2, and RK4). Python remains the reference implementation
+and owns the public API, units, stimuli, recording, and `.ax` interpreter.
+
+See [docs/CPP_BACKEND.md](docs/CPP_BACKEND.md) for build instructions and the
+Python `ctypes` bridge. The native library is opt-in through
+`AXIOM_CPP_LIBRARY`; importing AXIOM does not compile or load native code
+automatically. No performance advantage is claimed until benchmarked.
