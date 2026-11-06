@@ -7,6 +7,7 @@ resulting shared-library path; importing AXIOM never compiles native code.
 from __future__ import annotations
 
 import ctypes
+from functools import lru_cache
 import os
 from pathlib import Path
 from typing import Final
@@ -30,12 +31,14 @@ def _library_path() -> Path:
     path = Path(configured).expanduser()
     if not path.is_file():
         raise NativeBackendError(f"AXIOM C++ library does not exist: {path}")
-    return path
+    return path.resolve()
 
 
-def _load_library() -> ctypes.CDLL:
+@lru_cache(maxsize=8)
+def _load_library(path_string: str) -> ctypes.CDLL:
+    """Load each configured shared library once per process and absolute path."""
     try:
-        library = ctypes.CDLL(str(_library_path()))
+        library = ctypes.CDLL(path_string)
     except OSError as error:
         raise NativeBackendError(f"Could not load AXIOM C++ library: {error}") from error
 
@@ -60,7 +63,7 @@ def _load_library() -> ctypes.CDLL:
 def native_available() -> bool:
     """Return whether the configured native library can be loaded."""
     try:
-        _load_library()
+        _load_library(str(_library_path()))
     except NativeBackendError:
         return False
     return True
@@ -82,7 +85,7 @@ def native_lif_step(
     if solver_name not in _SOLVERS:
         raise ValueError("solver must be 'euler', 'rk2', or 'rk4'.")
 
-    library = _load_library()
+    library = _load_library(str(_library_path()))
     output = ctypes.c_double()
     status = library.axiom_lif_step(
         _SOLVERS[solver_name],
