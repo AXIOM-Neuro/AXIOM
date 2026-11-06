@@ -60,13 +60,18 @@ def simulate_lif(
     duration: Quantity,
     time_step: Quantity,
     solver: str = "euler",
+    backend: str = "python",
 ) -> LIFResult:
     """Simulate a current-driven LIF neuron.
 
     Subthreshold equation:
         dV/dt = (E_rest - V + R * I) / tau_m
 
-    Supports refractory period and solvers: 'euler', 'rk2', 'rk4'.
+    Supports solvers 'euler', 'rk2', and 'rk4'. The default backend is the
+    pure-Python reference implementation. Select backend='cpp' to use the
+    optional compiled C++ kernel; set AXIOM_CPP_LIBRARY to its shared library.
+    Spike thresholding, reset, refractory handling, stimuli, and recording
+    remain managed by Python for both backends.
     """
     if not isinstance(parameters, LIFParameters):
         raise TypeError("parameters must be an LIFParameters instance.")
@@ -81,6 +86,17 @@ def simulate_lif(
     solver_lower = solver.lower().strip()
     if solver_lower not in {"euler", "rk2", "rk4"}:
         raise ValueError(f"Unsupported solver: {solver!r}. Choose from 'euler', 'rk2', 'rk4'.")
+
+    backend_lower = backend.lower().strip()
+    if backend_lower not in {"python", "cpp"}:
+        raise ValueError("backend must be 'python' or 'cpp'.")
+
+    native_step = None
+    if backend_lower == "cpp":
+        # Importing this bridge does not load or compile the shared library.
+        from axiom.native import native_lif_step
+
+        native_step = native_lif_step
 
     total_time = require_unit(duration, MS, "duration")
     dt = require_unit(time_step, MS, "time_step")
@@ -118,21 +134,45 @@ def simulate_lif(
             voltage = reset.value
             current_i = stimulus.current_at(Quantity(current_time_ms, MS)).to(NA).value
         else:
+            c_now = stimulus.current_at(Quantity(prev_time_ms, MS)).to(NA).value
             if solver_lower == "euler":
-                curr_val = stimulus.current_at(Quantity(prev_time_ms, MS)).to(NA).value
+                c_mid = c_now
+                c_next = c_now
+            elif solver_lower == "rk2":
+                c_mid = stimulus.current_at(
+                    Quantity(prev_time_ms + 0.5 * dt.value, MS)
+                ).to(NA).value
+                c_next = c_mid
+            else:  # rk4
+                c_mid = stimulus.current_at(
+                    Quantity(prev_time_ms + 0.5 * dt.value, MS)
+                ).to(NA).value
+                c_next = stimulus.current_at(
+                    Quantity(current_time_ms, MS)
+                ).to(NA).value
+
+            if backend_lower == "cpp":
+                assert native_step is not None
+                voltage = native_step(
+                    solver_lower,
+                    voltage,
+                    c_now,
+                    c_mid,
+                    c_next,
+                    dt.value,
+                    tau.value,
+                    rest.value,
+                    resistance.value,
+                )
+            elif solver_lower == "euler":
                 voltage = step_euler(
-                    voltage, curr_val, dt.value, tau.value, rest.value, resistance.value
+                    voltage, c_now, dt.value, tau.value, rest.value, resistance.value
                 )
             elif solver_lower == "rk2":
-                c_now = stimulus.current_at(Quantity(prev_time_ms, MS)).to(NA).value
-                c_mid = stimulus.current_at(Quantity(prev_time_ms + 0.5 * dt.value, MS)).to(NA).value
                 voltage = step_rk2(
                     voltage, c_now, c_mid, dt.value, tau.value, rest.value, resistance.value
                 )
-            elif solver_lower == "rk4":
-                c_now = stimulus.current_at(Quantity(prev_time_ms, MS)).to(NA).value
-                c_mid = stimulus.current_at(Quantity(prev_time_ms + 0.5 * dt.value, MS)).to(NA).value
-                c_next = stimulus.current_at(Quantity(current_time_ms, MS)).to(NA).value
+            else:  # rk4
                 voltage = step_rk4(
                     voltage, c_now, c_mid, c_next, dt.value, tau.value, rest.value, resistance.value
                 )
@@ -154,6 +194,7 @@ def simulate_lif(
     metadata = {
         "model": "LIF",
         "solver": solver_lower,
+        "backend": backend_lower,
         "time_step_ms": dt.value,
         "duration_ms": total_time.value,
         "membrane_time_constant_ms": tau.value,
