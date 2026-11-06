@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="440" viewBox="0 0 1200 440" role="img" aria-labelledby="title desc">
+  <title id="title">AXIOM Neuro logo</title>
+  <desc id="desc">A violet orbital neural symbol beside the AXIOM wordmark and the subtitle Computational Neuroscience.</desc>
+  <defs>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#C4A2FF"/>
+      <stop offset=".52" stop-color="#8755F5"/>
+      <stop offset="1" stop-color="#5426C8"/>
+    </linearGradient>
+    <linearGradient id="word" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#F8F6FF"/>
+      <stop offset="1" stop-color="#D7C9FF"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(48 36)">
+    <circle cx="180" cy="180" r="132" fill="none" stroke="#302052" stroke-width="2"/>
+    <path d="M88 282 L180 74 L272 282" fill="none" stroke="url(#violet)" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M126 198 H234" stroke="url(#violet)" stroke-width="13" stroke-linecap="round"/>
+    <ellipse cx="180" cy="180" rx="166" ry="62" transform="rotate(-28 180 180)" fill="none" stroke="url(#violet)" stroke-width="7"/>
+    <circle cx="316" cy="101" r="9" fill="#D6BFFF"/>
+    <circle cx="64" cy="254" r="7" fill="#9B6BFF"/>
+    <g fill="none" stroke="#A984FF" stroke-width="4" stroke-linecap="round">
+      <path d="M180 180 V126 M180 126 L150 99 M180 126 L210 96 M180 180 L145 211 M180 180 L215 215"/>
+      <path d="M150 99 L132 80 M210 96 L230 76 M145 211 L124 230 M215 215 L237 235"/>
+    </g>
+    <g fill="#D7C4FF">
+      <circle cx="180" cy="180" r="10"/><circle cx="150" cy="99" r="6"/><circle cx="210" cy="96" r="6"/>
+      <circle cx="145" cy="211" r="6"/><circle cx="215" cy="215" r="6"/>
+    </g>
+  </g>
+  <g transform="translate(430 0)">
+    <text x="0" y="236" fill="url(#word)" font-family="Inter, Avenir, Helvetica, Arial, sans-serif" font-size="154" font-weight="750" letter-spacing="12">AXIOM</text>
+    <path d="M6 284 H620" stroke="url(#violet)" stroke-width="3"/>
+    <text x="8" y="342" fill="#A77BFF" font-family="Inter, Avenir, Helvetica, Arial, sans-serif" font-size="35" font-weight="650" letter-spacing="15">NEURO</text>
+    <text x="8" y="390" fill="#B8A9D9" font-family="Inter, Avenir, Helvetica, Arial, sans-serif" font-size="21" letter-spacing="3">COMPUTATIONAL NEUROSCIENCE</text>
+  </g>
+</svg>
