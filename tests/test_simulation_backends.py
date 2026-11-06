@@ -58,7 +58,7 @@ class TestSimulationBackendSelection(unittest.TestCase):
                     result = simulate_lif(
                         parameters(),
                         Quantity(4.0, NA),
-                        Quantity(5.0, MS),
+                        Quantity(7.0, MS),
                         Quantity(1.0, MS),
                         solver=solver,
                         backend="cpp",
@@ -66,10 +66,11 @@ class TestSimulationBackendSelection(unittest.TestCase):
 
                 self.assertEqual(result.metadata["backend"], "cpp")
                 self.assertEqual(result.metadata["solver"], solver)
-                self.assertEqual(len(result.times_ms), 6)
-                self.assertEqual(len(result.membrane_voltage_mV), 6)
+                self.assertEqual(len(result.times_ms), 8)
+                self.assertEqual(len(result.membrane_voltage_mV), 8)
                 self.assertEqual(len(result.spike_times_ms), 1)
                 self.assertEqual(native_step.call_count, 5)
+                self.assertEqual(result.membrane_voltage_mV[-1], -65.0)
 
     def test_invalid_backend_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "backend must be"):
