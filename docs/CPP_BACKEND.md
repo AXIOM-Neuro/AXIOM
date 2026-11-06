@@ -1,12 +1,13 @@
 # AXIOM C++ numerical backend
 
 AXIOM keeps its public scientific API, unit system, stimulus abstractions,
-recording, and readable `.ax` language in Python. The optional C++ library
-provides numerical kernels for performance-sensitive operations.
+recording, spike threshold/reset logic, refractory handling, and readable
+`.ax` language in Python. The optional C++ library provides subthreshold
+numerical integration kernels.
 
 ## Current scope
 
-The first native kernel implements one subthreshold LIF integration step:
+The native kernel implements one subthreshold LIF integration step:
 
 ```text
 dV/dt = (E_rest - V + R_m I) / tau_m
@@ -36,8 +37,8 @@ The resulting shared library is normally named:
 - Linux: `libaxiom_cpp.so`
 - macOS: `libaxiom_cpp.dylib`
 
-Set `AXIOM_CPP_LIBRARY` to the full path of that file before using the Python
-bridge. For example, on Windows PowerShell:
+Set `AXIOM_CPP_LIBRARY` to the full path of that file before using the native
+backend. For example, on Windows PowerShell:
 
 ```powershell
 $env:AXIOM_CPP_LIBRARY = (Resolve-Path .\build\Release\axiom_cpp.dll).Path
@@ -45,34 +46,62 @@ $env:AXIOM_CPP_LIBRARY = (Resolve-Path .\build\Release\axiom_cpp.dll).Path
 
 The exact output location can vary by generator and build configuration.
 
-## Python bridge
+## Selecting the backend in Python
+
+The default remains the pure-Python reference implementation:
 
 ```python
-from axiom.native import native_available, native_lif_step
-
-if native_available():
-    next_voltage = native_lif_step(
-        solver="rk4",
-        voltage_mV=-60.0,
-        current_now_nA=1.0,
-        current_mid_nA=1.0,
-        current_next_nA=1.0,
-        dt_ms=0.1,
-        tau_ms=20.0,
-        resting_voltage_mV=-65.0,
-        input_resistance_MOhm=10.0,
-    )
+result = simulate_lif(
+    parameters,
+    injected_current,
+    duration,
+    time_step,
+    solver="rk4",
+)
 ```
 
-The native backend is opt-in and never compiles code during import or silently
-changes the existing Python simulation path. The Python implementation remains
-the reference implementation.
+To explicitly select the optional C++ subthreshold kernel:
 
-## Validation principles
+```python
+result = simulate_lif(
+    parameters,
+    injected_current,
+    duration,
+    time_step,
+    solver="rk4",
+    backend="cpp",
+)
+```
 
-- Keep Python and C++ equations and units explicit.
-- Compare native outputs against the Python reference solver in tests.
-- Preserve deterministic solver selection and error handling.
-- Do not claim a speed improvement until reproducible benchmarks establish it.
-- Extend the native boundary to full simulation only after numerical parity is
-  demonstrated for stimuli, threshold/reset behavior, and refractory periods.
+The `backend` argument accepts `"python"` or `"cpp"`. Selecting `"cpp"`
+requires `AXIOM_CPP_LIBRARY` to point to a compatible compiled library.
+Missing or invalid libraries produce an explicit error; there is no silent
+fallback. Both paths return the same `LIFResult` structure and identify the
+selected backend in result metadata.
+
+Python continues to manage stimulus evaluation, threshold crossing, spike
+recording, voltage reset, refractory periods, and result construction. Only
+the subthreshold integration step is delegated to C++.
+
+## Validation
+
+- `cpp/tests` checks the native kernel's numerical outputs and invalid-input
+  handling.
+- `tests/test_native_integration.py` compares compiled C++ Euler, RK2, and RK4
+  steps with the Python reference solvers over multiple input cases.
+- `tests/test_simulation_backends.py` checks backend selection and Python-side
+  spike/reset orchestration using a mocked native call.
+- The backend CI workflow builds the C++ library, runs CTest, installs the
+  Python package, and runs the Python tests with the compiled library enabled.
+
+These tests are not a substitute for broader validation across time-varying
+stimuli, threshold-crossing edge cases, and refractory-boundary conditions.
+The Python implementation remains the reference implementation.
+
+## Performance
+
+No speed improvement is claimed. The current interface crosses the Python/C++
+boundary once per integration step; that call overhead may outweigh the cost
+of this small scalar calculation. Meaningful acceleration may require a
+batched or full-trajectory native interface, which should only be considered
+after numerical parity and reproducible benchmarks.
