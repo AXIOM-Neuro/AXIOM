@@ -61,6 +61,7 @@ def simulate_lif(
     time_step: Quantity,
     solver: str = "euler",
     backend: str = "python",
+    spike_time_method: str = "grid",
 ) -> LIFResult:
     """Simulate a current-driven LIF neuron.
 
@@ -70,6 +71,10 @@ def simulate_lif(
     Supports solvers 'euler', 'rk2', and 'rk4'. The default backend is the
     pure-Python reference implementation. Select backend='cpp' to use the
     optional compiled C++ kernel; set AXIOM_CPP_LIBRARY to its shared library.
+    Spike times use the end-of-step grid by default. Set
+    spike_time_method='linear' to linearly interpolate the threshold crossing
+    between the previous and current voltage samples. This changes event-time
+    estimates only; the voltage trace and integration grid remain unchanged.
     Spike thresholding, reset, refractory handling, stimuli, and recording
     remain managed by Python for both backends.
     """
@@ -90,6 +95,10 @@ def simulate_lif(
     backend_lower = backend.lower().strip()
     if backend_lower not in {"python", "cpp"}:
         raise ValueError("backend must be 'python' or 'cpp'.")
+
+    spike_time_method_lower = spike_time_method.lower().strip()
+    if spike_time_method_lower not in {"grid", "linear"}:
+        raise ValueError("spike_time_method must be 'grid' or 'linear'.")
 
     native_step = None
     if backend_lower == "cpp":
@@ -128,9 +137,11 @@ def simulate_lif(
     for step in range(1, steps + 1):
         prev_time_ms = (step - 1) * dt.value
         current_time_ms = step * dt.value
+        previous_voltage = voltage
+        in_refractory = prev_time_ms < last_spike_time + refractory.value
 
         # Check refractory state
-        if prev_time_ms < last_spike_time + refractory.value:
+        if in_refractory:
             voltage = reset.value
             current_i = stimulus.current_at(Quantity(current_time_ms, MS)).to(NA).value
         else:
@@ -180,7 +191,17 @@ def simulate_lif(
             current_i = stimulus.current_at(Quantity(current_time_ms, MS)).to(NA).value
 
         if voltage >= threshold.value:
-            spikes.append(current_time_ms)
+            if spike_time_method_lower == "linear" and not in_refractory:
+                delta_v = voltage - previous_voltage
+                if delta_v > 0:
+                    fraction = (threshold.value - previous_voltage) / delta_v
+                    fraction = min(1.0, max(0.0, fraction))
+                    spike_time = prev_time_ms + fraction * dt.value
+                else:
+                    spike_time = current_time_ms
+            else:
+                spike_time = current_time_ms
+            spikes.append(spike_time)
             last_spike_time = current_time_ms
             voltage = reset.value
 
@@ -195,6 +216,7 @@ def simulate_lif(
         "model": "LIF",
         "solver": solver_lower,
         "backend": backend_lower,
+        "spike_time_method": spike_time_method_lower,
         "time_step_ms": dt.value,
         "duration_ms": total_time.value,
         "membrane_time_constant_ms": tau.value,

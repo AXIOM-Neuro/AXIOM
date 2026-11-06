@@ -117,7 +117,7 @@ stimulus = StepCurrent(
     duration=Quantity(80, MS),
 )
 
-# Or pulse train stimulus:
+# Or pulse train current:
 # from axiom.stimuli import PulseTrainCurrent
 # stimulus = PulseTrainCurrent(
 #     amplitude=Quantity(2, NA),
@@ -143,12 +143,36 @@ print(f"Spike times (ms): {list(result.spike_times_ms)}")
 result.save_csv("python_lif_output.csv")
 ```
 
+### Spike timestamp estimation
+
+By default, spike timestamps are reported at the first integration-grid sample
+that reaches threshold (`spike_time_method="grid"`). For an optional
+sub-step estimate, select linear interpolation:
+
+```python
+result = simulate_lif(
+    parameters=params,
+    injected_current=stimulus,
+    duration=Quantity(100, MS),
+    time_step=Quantity(0.1, MS),
+    solver="rk4",
+    spike_time_method="linear",
+)
+```
+
+Linear interpolation estimates where the voltage crossed threshold between
+the previous and current samples. It changes the reported event timestamps,
+not the integration grid, voltage trace, reset behavior, or refractory logic.
+It is an approximation, not an exact event-driven solution; its accuracy
+depends on the time step and local trajectory curvature.
+
 ---
 
 ## Features & Philosophy
 
 - **Physical Units**: Built-in support for time (`ms`, `s`, `us`), voltage (`mV`, `V`), current (`nA`, `pA`), resistance (`MOhm`), capacitance (`nF`), and frequency (`Hz`).
-- **Explicit Numerical Integration**: Choice of Forward Euler, Midpoint (RK2), or RK4 solvers with step size stability validation.
+- **Explicit Numerical Integration**: Choice of Forward Euler, Midpoint (RK2), or RK4 solvers.
+- **Spike Event Timing**: Grid-aligned timestamps by default, with optional linear interpolation between samples.
 - **Stimulus Abstractions**: Constant current, step current, pulse trains, and linear superposition.
 - **Reproducible Outputs**: Structured recording of voltage traces, spike event times, and export to CSV or Python dicts.
 
@@ -197,11 +221,9 @@ We welcome contributions from the computational neuroscience and open-science co
 
 ---
 
-
 ## License
 
-AXIOM is free, open-source, and licensed under the MIT License
-
+AXIOM is free, open-source, and licensed under the MIT License.
 
 ## Optional C++ Numerical Backend
 
