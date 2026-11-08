@@ -80,7 +80,7 @@ class TestBackendTrajectoryParity(unittest.TestCase):
         stimulus = StepCurrent(
             amplitude=Quantity(2.2, NA),
             start_time=Quantity(3.25, MS),
-            duration=Quantity(55.5, MS),
+            duration=Quantity(68.5, MS),
         )
         for solver in ("euler", "rk2", "rk4"):
             with self.subTest(solver=solver):
